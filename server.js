@@ -2,6 +2,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import chatRoutes from './src/routes/chat.js';
 
 // ✅ Correct paths — routes are inside the "src" folder
 import authRoutes from './src/routes/auth.js';
@@ -45,6 +46,7 @@ app.use('/api/inbox', inboxRoutes);
 app.use('/api/outreach', outreachRoutes);
 app.use('/api/updates', updatesRoutes);
 app.use('/api/reviews', reviewsRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
