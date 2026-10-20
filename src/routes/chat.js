@@ -2,6 +2,7 @@
 import express from 'express';
 import { supabaseAdmin } from '../config/supabase.js';
 import { requireAuth } from '../middleware/auth.js';
+import { sendEmail } from '../utils/sendEmail.js';
 
 const router = express.Router();
 
@@ -45,6 +46,25 @@ router.post('/', async (req, res) => {
       .single();
 
     if (error) return res.status(400).json({ error: error.message });
+
+    // Send Email Notification
+    await sendEmail({
+      subject: `New Chat from ${sender_name || 'Visitor'}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #0a1b33;">New Live Chat Message</h2>
+          <p><strong>From:</strong> ${sender_name || 'Visitor'}</p>
+          <p><strong>Message:</strong></p>
+          <div style="background: #f3f6fb; padding: 15px; border-radius: 8px; border-left: 4px solid #0a1b33;">
+            <p style="white-space: pre-wrap; margin: 0;">${message}</p>
+          </div>
+          <p style="margin-top: 20px;">
+            <a href="https://isdl.tech/admin/chat" style="background: #0a1b33; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Reply in Admin Panel</a>
+          </p>
+        </div>
+      `,
+    });
+
     res.status(201).json({ data });
   } catch (error) {
     console.error('Chat send error:', error);

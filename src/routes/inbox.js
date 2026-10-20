@@ -2,6 +2,7 @@
 import express from 'express';
 import { supabaseAdmin } from '../config/supabase.js';
 import { requireAuth } from '../middleware/auth.js';
+import { sendEmail } from '../utils/sendEmail.js';
 
 const router = express.Router();
 
@@ -14,6 +15,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Name, email, and message are required' });
     }
 
+    // 1. Save to Supabase
     const { data, error } = await supabaseAdmin
       .from('inbox_messages')
       .insert([{ name, email, message }])
@@ -23,6 +25,25 @@ router.post('/', async (req, res) => {
     if (error) {
       return res.status(400).json({ error: error.message });
     }
+
+    // 2. Send Email Notification
+    await sendEmail({
+      subject: `New Contact Form Message from ${name}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #0a1b33;">New Message from your Website</h2>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Message:</strong></p>
+          <div style="background: #f3f6fb; padding: 15px; border-radius: 8px; border-left: 4px solid #0a1b33;">
+            <p style="white-space: pre-wrap; margin: 0;">${message}</p>
+          </div>
+          <p style="margin-top: 20px;">
+            <a href="https://isdl.tech/admin/inbox" style="background: #0a1b33; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">View in Admin Panel</a>
+          </p>
+        </div>
+      `,
+    });
 
     res.status(201).json({ message: 'Message sent successfully', data });
   } catch (error) {
