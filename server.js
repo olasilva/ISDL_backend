@@ -10,6 +10,7 @@ import inboxRoutes from './src/routes/inbox.js';
 import outreachRoutes from './src/routes/outreach.js';
 import updatesRoutes from './src/routes/updates.js';
 import reviewsRoutes from './src/routes/reviews.js';
+import projectRoutes from './src/routes/projects.js';
 
 dotenv.config();
 
@@ -39,6 +40,7 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use('/api/projects', projectRoutes);
 
 // Mount routes
 app.use('/api/auth', authRoutes);
