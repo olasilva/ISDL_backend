@@ -17,28 +17,13 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ CORS Configuration (Supports localhost, custom domains, and Vercel previews)
+// ✅ CORS Configuration
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
-
-    // Allow localhost for development
-    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-      return callback(null, true);
-    }
-
-    // Allow your specific custom domains
-    if (origin === 'https://isdl.tech' || origin === 'https://www.isdl.tech') {
-      return callback(null, true);
-    }
-
-    // Allow all Vercel deployments (both your frontend and backend)
-    if (origin.includes('vercel.app')) {
-      return callback(null, true);
-    }
-
-    // If none match, block the request
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) return callback(null, true);
+    if (origin === 'https://isdl.tech' || origin === 'https://www.isdl.tech') return callback(null, true);
+    if (origin.includes('vercel.app')) return callback(null, true);
     callback(new Error(`CORS blocked for origin: ${origin}`));
   },
   credentials: true,
@@ -50,6 +35,12 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// ✅ Request Logger (Shows up in Vercel Logs)
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
 // Mount API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/inbox', inboxRoutes);
@@ -59,7 +50,7 @@ app.use('/api/reviews', reviewsRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/projects', projectRoutes);
 
-// Root route (Fix for the 404 when visiting the base URL)
+// Root route
 app.get('/', (req, res) => {
   res.status(200).json({ 
     status: 'OK', 
@@ -73,6 +64,18 @@ app.get('/api/health', (req, res) => {
     status: 'OK',
     message: 'Backend is running',
     timestamp: new Date().toISOString(),
+  });
+});
+
+// ✅ DEBUG ROUTE: Check if Environment Variables exist
+app.get('/api/debug-env', (req, res) => {
+  res.json({
+    hasSupabaseUrl: !!process.env.SUPABASE_URL,
+    hasServiceRole: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    hasAnonKey: !!process.env.SUPABASE_ANON_KEY,
+    hasEmailUser: !!process.env.EMAIL_USER,
+    hasEmailPass: !!process.env.EMAIL_PASS,
+    hasAdminEmail: !!process.env.ADMIN_EMAIL,
   });
 });
 
