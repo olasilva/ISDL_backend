@@ -17,7 +17,10 @@ router.get('/session/:sessionId', async (req, res) => {
       .eq('session_id', sessionId)
       .order('created_at', { ascending: true });
 
-    if (error) return res.status(400).json({ error: error.message });
+    if (error) {
+      console.error('Supabase fetch error:', error);
+      return res.status(400).json({ error: error.message });
+    }
     res.json({ data });
   } catch (error) {
     console.error('Chat fetch error:', error);
@@ -45,10 +48,14 @@ router.post('/', async (req, res) => {
       .select()
       .single();
 
-    if (error) return res.status(400).json({ error: error.message });
+    if (error) {
+      console.error('Supabase insert error:', error);
+      return res.status(400).json({ error: error.message });
+    }
 
-    // Send Email Notification
-    await sendEmail({
+    // ✅ FIX: Send Email in the background (No await)
+    // This prevents the email server from crashing the chat if it times out.
+    sendEmail({
       subject: `New Chat from ${sender_name || 'Visitor'}`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
@@ -63,8 +70,9 @@ router.post('/', async (req, res) => {
           </p>
         </div>
       `,
-    });
+    }).catch(err => console.error('Background email failed:', err.message));
 
+    // Respond to the user immediately
     res.status(201).json({ data });
   } catch (error) {
     console.error('Chat send error:', error);
